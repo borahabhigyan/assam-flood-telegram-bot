@@ -1,33 +1,38 @@
-name: Telegram test post
+name: Telegram danger alerts
 
 on:
+  schedule:
+    - cron: "25 */2 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  post:
+  alert:
     runs-on: ubuntu-latest
     steps:
-      - name: Send test message to group
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check danger + post to group
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/telegram_danger_bot.py
+
+      - name: Save state
         run: |
-          set -e
-          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
-            echo "ERROR: TELEGRAM_BOT_TOKEN secret is empty"
-            exit 1
+          git config user.name "flood-bot"
+          git config user.email "actions@users.noreply.github.com"
+          mkdir -p bot_state
+          git add bot_state/danger_state.json || true
+          if git diff --cached --quiet; then
+            echo "No state change"
+          else
+            git commit -m "bot: update danger state"
+            git push
           fi
-          if [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "ERROR: TELEGRAM_CHAT_ID secret is empty"
-            exit 1
-          fi
-          echo "Chat id length: ${#TELEGRAM_CHAT_ID}"
-          echo "Token length: ${#TELEGRAM_BOT_TOKEN}"
-          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=GitHub Actions test: bot can post in this group." \
-            -o /tmp/tg.json -w "HTTP %{http_code}\n"
-          echo "Response:"
-          cat /tmp/tg.json
-          echo
-          grep -q '"ok":true' /tmp/tg.json || grep -q '"ok": true' /tmp/tg.json
