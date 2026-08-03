@@ -3,7 +3,7 @@ name: Telegram river updates
 on:
   schedule:
     # Every 2 hours at minute 55 (UTC)
-    - cron: "55 */2 * * *"
+    - cron: "0 1-23/2 * * *"
   workflow_dispatch:
 
 permissions:
