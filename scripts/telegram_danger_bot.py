@@ -108,13 +108,14 @@ def format_status(
     hfl = [g for g in in_danger if g.get("status") == "above_hfl"]
     danger = [g for g in in_danger if g.get("status") == "above_danger"]
 
-    danger.sort(
+            danger.sort(
         key=lambda g: (
             -(g.get("trend_cm_per_hr") or 0),
             -(g.get("level_m") or 0),
         )
     )
-try:
+
+    try:
         dt = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
         ts = dt.strftime("%d %b, %H:%M")
     except Exception:
