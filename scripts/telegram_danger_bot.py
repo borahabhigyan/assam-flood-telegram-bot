@@ -132,8 +132,7 @@ def format_status(
 
     lines.append("")
     lines.append(
-        "Source: [assamflood.org](https://assamflood.org) (CWC data)\n"
-        "Not an official warning. Emergency: ASDMA *1070*"
+         "Not an official warning. Emergency: ASDMA *1070*"
     )
     return "\n".join(lines)
 
