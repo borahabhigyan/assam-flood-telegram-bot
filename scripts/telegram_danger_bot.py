@@ -6,6 +6,7 @@ import sys
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from datetime import datetime
 
 BASE = "https://assamflood.org/"
 STATE_PATH = Path("bot_state/danger_state.json")
@@ -95,20 +96,33 @@ def fmt_trend(value) -> str:
 
 
 def format_status(
-        hfl = [g for g in in_danger if g.get("status") == "above_hfl"]
+    in_danger: list[dict],
+    all_gauges: list[dict],
+    generated_at: str,
+    new_keys: set[str],
+) -> str:
+    n_hfl = sum(1 for g in in_danger if g.get("status") == "above_hfl")
+    n_danger = sum(1 for g in in_danger if g.get("status") == "above_danger")
+    n_warn = sum(1 for g in all_gauges if g.get("status") == "warning")
+
+    hfl = [g for g in in_danger if g.get("status") == "above_hfl"]
     danger = [g for g in in_danger if g.get("status") == "above_danger"]
 
-    # Top 5 danger gauges by fastest rise, then highest level.
     danger.sort(
         key=lambda g: (
             -(g.get("trend_cm_per_hr") or 0),
             -(g.get("level_m") or 0),
         )
     )
+try:
+        dt = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+        ts = dt.strftime("%d %b, %H:%M")
+    except Exception:
+        ts = generated_at
 
     lines = [
         "🌊 *Assam Flood Update*",
-        f"🕒 {generated_at}",
+        f"🕒 {ts}",
         "",
         f"🔴 HFL: *{n_hfl}*  🟠 Danger: *{n_danger}*  🟡 Warning: *{n_warn}*",
     ]
