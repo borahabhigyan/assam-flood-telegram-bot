@@ -1,0 +1,44 @@
+name: Telegram danger alerts
+
+on:
+  schedule:
+    - cron: "25 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (do not send)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check danger + post to group
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == true && '1' || '0' }}
+        run: python scripts/telegram_danger_bot.py
+
+      - name: Save state
+        run: |
+          git config user.name "flood-bot"
+          git config user.email "actions@users.noreply.github.com"
+          mkdir -p bot_state
+          git add bot_state/danger_state.json || true
+          if git diff --cached --quiet; then
+            echo "No state change"
+          else
+            git commit -m "bot: update danger state"
+            git push
+          fi
