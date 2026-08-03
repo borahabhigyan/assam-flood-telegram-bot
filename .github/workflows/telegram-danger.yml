@@ -1,7 +1,8 @@
-name: Telegram danger alerts
+name: Telegram river updates
 
 on:
   schedule:
+    # Every 2 hours at minute 25 (UTC)
     - cron: "25 */2 * * *"
   workflow_dispatch:
 
@@ -9,22 +10,24 @@ permissions:
   contents: write
 
 jobs:
-  alert:
+  update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Check danger + post to group
+      - name: Fetch levels and post to Telegram group
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/telegram_danger_bot.py
 
-      - name: Save state
+      - name: Save danger state
         run: |
           git config user.name "flood-bot"
           git config user.email "actions@users.noreply.github.com"
