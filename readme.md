@@ -1,0 +1,1 @@
+[![Telegram river updates](https://github.com/borahabhigyan/assam-flood-telegram-bot/actions/workflows/telegram-danger.yml/badge.svg)](https://github.com/borahabhigyan/assam-flood-telegram-bot/actions/workflows/telegram-danger.yml)
