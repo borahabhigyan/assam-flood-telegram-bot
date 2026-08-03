@@ -123,7 +123,7 @@ def format_status(
 
     lines = [
         "🌊 *Assam Flood Update*",
-        f"🕒 {ts}",
+        f"Data as of 🕒 {ts}",
         "",
         f"🔴 HFL: *{n_hfl}*  🟠 Danger: *{n_danger}*  🟡 Warning: *{n_warn}*",
     ]
