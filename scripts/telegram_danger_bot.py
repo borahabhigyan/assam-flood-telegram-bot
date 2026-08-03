@@ -83,57 +83,73 @@ def fmt_level(value) -> str:
 
 def fmt_trend(value) -> str:
     if value is None:
-        return "—"
+        return "→0.0 cm/h"
     try:
-        return f"{float(value):+.1f} cm/h"
+        v = float(value)
+        if abs(v) < 0.05:
+            return "→0.0 cm/h"
+        arrow = "↑" if v > 0 else "↓"
+        return f"{arrow}{abs(v):.1f} cm/h"
     except (TypeError, ValueError):
         return "—"
 
 
 def format_status(
-    in_danger: list[dict],
-    all_gauges: list[dict],
-    generated_at: str,
-    new_keys: set[str],
-) -> str:
-    n_hfl = sum(1 for g in in_danger if g.get("status") == "above_hfl")
-    n_danger = sum(1 for g in in_danger if g.get("status") == "above_danger")
-    n_warn = sum(1 for g in all_gauges if g.get("status") == "warning")
+        hfl = [g for g in in_danger if g.get("status") == "above_hfl"]
+    danger = [g for g in in_danger if g.get("status") == "above_danger"]
+
+    # Top 5 danger gauges by fastest rise, then highest level.
+    danger.sort(
+        key=lambda g: (
+            -(g.get("trend_cm_per_hr") or 0),
+            -(g.get("level_m") or 0),
+        )
+    )
 
     lines = [
-        "📡 *Assam river update*",
-        f"_Data time: {generated_at}_",
+        "🌊 *Assam Flood Update*",
+        f"🕒 {generated_at}",
         "",
-        f"Above HFL: *{n_hfl}* · Danger: *{n_danger}* · Warning: *{n_warn}*",
-        "",
+        f"🔴 HFL: *{n_hfl}*  🟠 Danger: *{n_danger}*  🟡 Warning: *{n_warn}*",
     ]
 
     if new_keys:
-        lines.append("⚠️ *New danger crossing(s) since last check*")
-        lines.append("")
-
-    if not in_danger:
-        lines.append("No gauges at danger level right now.")
-    else:
-        lines.append("*Gauges at danger / HFL:*")
-        for g in in_danger[:15]:
+        lines.extend(["", "🚨 *New crossings*"])
+        for g in in_danger:
+            if gauge_key(g) not in new_keys:
+                continue
             name = g.get("site_name") or g.get("gauge_id") or "Gauge"
-            st = STATUS_LABEL.get(g.get("status") or "", g.get("status") or "?")
-            level_s = fmt_level(g.get("level_m"))
-            danger_s = fmt_level(g.get("danger_level_m"))
-            trend_s = fmt_trend(g.get("trend_cm_per_hr"))
-            tag = " 🆕" if gauge_key(g) in new_keys else ""
-            lines.append(
-                f"• *{name}* ({river_of(g)}){tag}\n"
-                f"  {st} · level `{level_s}` · danger mark `{danger_s}` · trend `{trend_s}`"
-            )
-        if len(in_danger) > 15:
-            lines.append(f"…and {len(in_danger) - 15} more")
+            if g.get("status") == "above_hfl":
+                lines.append(f"• {name} crossed HFL 🔴")
+            else:
+                lines.append(f"• {name} crossed Danger 🟠")
 
-    lines.append("")
-    lines.append(
-         "Not an official warning. Emergency: ASDMA *1070*"
+    if hfl:
+        lines.extend(["", "🔴 *Above HFL*"])
+        for g in hfl:
+            name = g.get("site_name") or g.get("gauge_id") or "Gauge"
+            lines.append(
+                f"• {name} {fmt_level(g.get('level_m'))} {fmt_trend(g.get('trend_cm_per_hr'))}"
+            )
+
+    if danger:
+        lines.extend(["", "🟠 *Highest concern (Top 5)*"])
+        for g in danger[:5]:
+            name = g.get("site_name") or g.get("gauge_id") or "Gauge"
+            lines.append(
+                f"• {name} {fmt_level(g.get('level_m'))} {fmt_trend(g.get('trend_cm_per_hr'))}"
+            )
+
+    if not hfl and not danger:
+        lines.extend(["", "✅ No gauges above danger level."])
+
+    lines.extend(
+        [
+            "",
+            "☎ ASDMA Emergency: *1070*",
+        ]
     )
+
     return "\n".join(lines)
 
 
