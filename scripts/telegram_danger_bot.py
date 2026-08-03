@@ -138,21 +138,24 @@ def format_status(
                 lines.append(f"• {name} crossed HFL 🔴")
             else:
                 lines.append(f"• {name} crossed Danger 🟠")
-
     if hfl:
         lines.extend(["", "🔴 *Above HFL*"])
         for g in hfl:
             name = g.get("site_name") or g.get("gauge_id") or "Gauge"
+            river = river_of(g)
+            
             lines.append(
-                f"• {name} {fmt_level(g.get('level_m'))} {fmt_trend(g.get('trend_cm_per_hr'))}"
+                 f"• {name} ({river}) {fmt_level(g.get('level_m'))} {fmt_trend(g.get('trend_cm_per_hr'))}"
             )
 
     if danger:
         lines.extend(["", "🟠 *Highest concern (Top 5)*"])
         for g in danger[:5]:
             name = g.get("site_name") or g.get("gauge_id") or "Gauge"
+            river = river_of(g)
+
             lines.append(
-                f"• {name} {fmt_level(g.get('level_m'))} {fmt_trend(g.get('trend_cm_per_hr'))}"
+                 f"• {name} ({river}) {fmt_level(g.get('level_m'))} {fmt_trend(g.get('trend_cm_per_hr'))}"
             )
 
     if not hfl and not danger:
