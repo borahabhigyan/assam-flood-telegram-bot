@@ -142,7 +142,7 @@ def main():
 
             lines.append(
                  f"• {river_of(g)} ({place_of(g)})\n"
-                 f"  +{diff:.2f} m • {fmt_trend(g.get('trend_cm_per_hr'))}"
+                 f"  +{diff:.2f} m • {fmt_trend(g.get('trend_cm_per_hr'))}\n"
             )
 
         lines.append("")
@@ -157,7 +157,8 @@ def main():
                 continue
 
             lines.append(
-                f"● {river_of(g)} ({place_of(g)}) is above *{diff:.2f} m* the Danger Level {fmt_trend(g.get('trend_cm_per_hr'))}"
+                 f"• {river_of(g)} ({place_of(g)})\n"
+                 f"  +{diff:.2f} m • {fmt_trend(g.get('trend_cm_per_hr'))}\n"
             )
 
         lines.append("")
@@ -172,8 +173,10 @@ def main():
                 continue
 
             lines.append(
-                f"● {river_of(g)} ({place_of(g)}) is above *{diff:.2f} m* the Warning Level {fmt_trend(g.get('trend_cm_per_hr'))}"
+                 f"• {river_of(g)} ({place_of(g)})\n"
+                 f"  +{diff:.2f} m • {fmt_trend(g.get('trend_cm_per_hr'))}\n"
             )
+
 
         lines.append("")
 
