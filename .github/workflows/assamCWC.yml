@@ -1,2 +1,0 @@
-- name: Fetch CWC Assam data
-  run: python scripts/fetch_cwc_assam.py
