@@ -44,13 +44,13 @@ def place_of(g):
 
 def fmt_trend(v):
     if v is None:
-        return "→0.0 cm/h"
+        return "→ Stable"
 
     try:
         v = float(v)
 
         if abs(v) < 0.05:
-            return "→0.0 cm/h"
+            return "→ Stable"
 
         return f"{'↑' if v > 0 else '↓'}{abs(v):.1f} cm/h"
 
@@ -141,7 +141,8 @@ def main():
                 continue
 
             lines.append(
-                f"● {river_of(g)} ({place_of(g)}) is above *{diff:.2f} m* the HFL {fmt_trend(g.get('trend_cm_per_hr'))}"
+                 f"• {river_of(g)} ({place_of(g)})\n"
+                 f"  +{diff:.2f} m • {fmt_trend(g.get('trend_cm_per_hr'))}"
             )
 
         lines.append("")
