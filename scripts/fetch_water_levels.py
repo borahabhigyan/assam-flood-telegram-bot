@@ -5,12 +5,17 @@ Fetch CWC water-level data from smartaxom.nesdr.gov.in and save as JSON.
 
 import base64
 import json
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
+from urllib3.exceptions import InsecureRequestWarning
+
+# Suppress only the InsecureRequestWarning for this call
+warnings.simplefilter("ignore", InsecureRequestWarning)
 
 # Credentials from the frontend Environment.js
 KEY_ID = "tDqR0XLgej9c0QuYabX69GR4cLl2H1eq"
@@ -37,6 +42,7 @@ def fetch_data() -> dict:
         API_URL,
         data={"key": encrypted},
         timeout=30,
+        verify=False,          # ← required because of self-signed cert in chain
     )
     response.raise_for_status()
     return response.json()
