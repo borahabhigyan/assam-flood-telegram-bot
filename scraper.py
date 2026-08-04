@@ -1,25 +1,23 @@
-import requests
-import urllib3
+from playwright.sync_api import sync_playwright
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+URL = "https://smartaxom.nesdr.gov.in/analytics/flood/waterlevelinfo"
 
-url = "https://smartaxom.nesdr.gov.in/analytics/flood/waterlevelinfo"
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
 
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
+    context = browser.new_context(ignore_https_errors=True)
 
-r = requests.get(
-    url,
-    headers=headers,
-    timeout=30,
-    verify=False,   # TEMPORARY
-)
+    page = context.new_page()
 
-print("Status:", r.status_code)
-print("Length:", len(r.text))
+    page.goto(URL, wait_until="networkidle", timeout=60000)
 
-with open("page.html", "w", encoding="utf-8") as f:
-    f.write(r.text)
+    print(page.title())
 
-print("Saved page.html")
+    with open("page.html", "w", encoding="utf-8") as f:
+        f.write(page.content())
+
+    page.screenshot(path="page.png", full_page=True)
+
+    browser.close()
+
+print("Done")
