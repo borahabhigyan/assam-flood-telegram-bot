@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Fetch CWC water-level data from smartaxom.nesdr.gov.in and save as JSON.
-"""
-
 import base64
 import json
 import warnings
@@ -20,6 +16,7 @@ KEY_ID = "tDqR0XLgej9c0QuYabX69GR4cLl2H1eq"
 E_KEY = b"quvaFPLNdcpHqUgmrE71JI6QoSeq4dAZ"
 E_IV = b"5034195220579759"
 API_URL = "https://smartaxom.nesdr.gov.in/api_v2/dataCWC"
+PAGE_URL = "https://smartaxom.nesdr.gov.in/analytics/flood/waterlevelinfo"
 
 OUTPUT_FILE = Path(__file__).resolve().parent.parent / "data" / "water_level_data.json"
 
@@ -31,12 +28,8 @@ def encrypt_payload(payload: str) -> str:
 
 
 def fetch_data() -> dict:
-    payload = json.dumps({"keyId": KEY_ID}, separators=(",", ":"))
-    encrypted = encrypt_payload(payload)
-
-    # Force multipart/form-data exactly like the browser FormData does
-    # (None, value) = ordinary form field, no filename
-    files = {"key": (None, encrypted)}
+    session = requests.Session()
+    session.verify = False
 
     headers = {
         "User-Agent": (
@@ -44,23 +37,41 @@ def fetch_data() -> dict:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/126.0.0.0 Safari/537.36"
         ),
-        "Origin": "https://smartaxom.nesdr.gov.in",
-        "Referer": "https://smartaxom.nesdr.gov.in/analytics/flood/waterlevelinfo",
-        "Accept": "application/json, text/plain, */*",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
     }
 
-    response = requests.post(
+    # 1. Visit the page first (obtains any cookies the WAF may set)
+    session.get(PAGE_URL, headers=headers, timeout=30)
+
+    # 2. Now call the API
+    payload = json.dumps({"keyId": KEY_ID}, separators=(",", ":"))
+    encrypted = encrypt_payload(payload)
+
+    files = {"key": (None, encrypted)}
+
+    api_headers = {
+        **headers,
+        "Origin": "https://smartaxom.nesdr.gov.in",
+        "Referer": PAGE_URL,
+        "Accept": "application/json, text/plain, */*",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+
+    response = session.post(
         API_URL,
         files=files,
-        headers=headers,
+        headers=api_headers,
         timeout=30,
-        verify=False,
     )
 
-    # Helpful debug if it still fails
     if response.status_code != 200:
         print("Status:", response.status_code)
-        print("Response body:", response.text[:500])
+        print("Response body:", response.text[:800])
+        print("Cookies:", session.cookies.get_dict())
 
     response.raise_for_status()
     return response.json()
