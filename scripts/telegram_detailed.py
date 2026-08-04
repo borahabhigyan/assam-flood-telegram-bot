@@ -132,7 +132,8 @@ def main():
     ]
 
     if hfl:
-        lines.append("🔴 *HFL*")
+        lines.append(f"🔴 *Above HFL Level({len(hfl)})*")
+        lines.append("")
 
         for g in sorted(hfl, key=lambda x: -(x.get("level_m") or 0)):
             diff = above(g.get("level_m"), g.get("hfl_m"))
@@ -148,8 +149,8 @@ def main():
         lines.append("")
 
     if danger:
-        lines.append("🟠 *Danger*")
-
+        lines.append(f"🟠 *Above Danger Level ({len(danger)})*")
+        lines.append("")
         for g in sorted(danger, key=lambda x: -(x.get("level_m") or 0)):
             diff = above(g.get("level_m"), g.get("danger_level_m"))
 
@@ -164,7 +165,8 @@ def main():
         lines.append("")
 
     if warning:
-        lines.append("🟡 *Warning*")
+        lines.append(f"🟡 *Above Warning Level ({len(warning)})*")
+        lines.append("")
 
         for g in sorted(warning, key=lambda x: -(x.get("level_m") or 0)):
             diff = above(g.get("level_m"), g.get("warning_level_m"))
