@@ -132,7 +132,7 @@ def main():
     ]
 
     if hfl:
-        lines.append(f"🔴 *Above HFL Level({len(hfl)})*")
+        lines.append(f"🔴 *Above Highest Flood Level ({len(hfl)})*")
         lines.append("")
 
         for g in sorted(hfl, key=lambda x: -(x.get("level_m") or 0)):
