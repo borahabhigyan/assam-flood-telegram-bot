@@ -14,21 +14,17 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from urllib3.exceptions import InsecureRequestWarning
 
-# Suppress only the InsecureRequestWarning for this call
 warnings.simplefilter("ignore", InsecureRequestWarning)
 
-# Credentials from the frontend Environment.js
 KEY_ID = "tDqR0XLgej9c0QuYabX69GR4cLl2H1eq"
 E_KEY = b"quvaFPLNdcpHqUgmrE71JI6QoSeq4dAZ"
 E_IV = b"5034195220579759"
 API_URL = "https://smartaxom.nesdr.gov.in/api_v2/dataCWC"
 
-# Save inside the data/ folder at the repo root
 OUTPUT_FILE = Path(__file__).resolve().parent.parent / "data" / "water_level_data.json"
 
 
 def encrypt_payload(payload: str) -> str:
-    """AES-CBC + PKCS7 – matches CryptoJS when key/IV are WordArrays."""
     cipher = AES.new(E_KEY, AES.MODE_CBC, E_IV)
     ct_bytes = cipher.encrypt(pad(payload.encode("utf-8"), AES.block_size))
     return base64.b64encode(ct_bytes).decode("utf-8")
@@ -38,12 +34,34 @@ def fetch_data() -> dict:
     payload = json.dumps({"keyId": KEY_ID}, separators=(",", ":"))
     encrypted = encrypt_payload(payload)
 
+    # Force multipart/form-data exactly like the browser FormData does
+    # (None, value) = ordinary form field, no filename
+    files = {"key": (None, encrypted)}
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/126.0.0.0 Safari/537.36"
+        ),
+        "Origin": "https://smartaxom.nesdr.gov.in",
+        "Referer": "https://smartaxom.nesdr.gov.in/analytics/flood/waterlevelinfo",
+        "Accept": "application/json, text/plain, */*",
+    }
+
     response = requests.post(
         API_URL,
-        data={"key": encrypted},
+        files=files,
+        headers=headers,
         timeout=30,
-        verify=False,          # ← required because of self-signed cert in chain
+        verify=False,
     )
+
+    # Helpful debug if it still fails
+    if response.status_code != 200:
+        print("Status:", response.status_code)
+        print("Response body:", response.text[:500])
+
     response.raise_for_status()
     return response.json()
 
