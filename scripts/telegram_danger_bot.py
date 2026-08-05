@@ -209,14 +209,50 @@ def send_telegram(text: str) -> None:
 
 
 def main() -> int:
+    from collections import Counter
+
     gauges, generated_at = load_gauges()
-    print(f"Loaded {len(gauges)} gauges · generated_at={generated_at}")
+
+    print(f"\nLoaded {len(gauges)} gauges")
+    print(f"generated_at = {generated_at}")
+
+    print("\n===== STATUS COUNTS =====")
+    print(Counter(g.get("status") for g in gauges))
+
+    print("\n===== ABOVE DANGER / HFL IN RAW DATA =====")
+    for g in gauges:
+        if g.get("status") in ("above_danger", "above_hfl"):
+            print(
+                {
+                    "site": g.get("site_name"),
+                    "river": river_of(g),
+                    "status": g.get("status"),
+                    "level": g.get("level_m"),
+                    "trend": g.get("trend_cm_per_hr"),
+                }
+            )
 
     in_danger = [
         g
         for g in gauges
-        if (g.get("status") or "") in DANGER_STATUSES and g.get("level_m") is not None
+        if (g.get("status") or "") in DANGER_STATUSES
+        and g.get("level_m") is not None
     ]
+
+    print("\n===== in_danger =====")
+    print(f"Count = {len(in_danger)}")
+
+    for g in in_danger:
+        print(
+            {
+                "site": g.get("site_name"),
+                "river": river_of(g),
+                "status": g.get("status"),
+                "level": g.get("level_m"),
+                "trend": g.get("trend_cm_per_hr"),
+            }
+        )
+
     in_danger.sort(
         key=lambda g: (
             0 if g.get("status") == "above_hfl" else 1,
@@ -231,16 +267,21 @@ def main() -> int:
     save_state(current_keys, generated_at)
 
     text = format_status(in_danger, gauges, generated_at, new_keys)
+
+    print("\n===== TELEGRAM MESSAGE =====")
+    print(text)
+    print("============================")
+
     if len(text) > 4000:
         text = format_status(in_danger[:10], gauges, generated_at, new_keys)
-        if len(text) > 4000:
-            text = text[:3900] + "\n…(truncated)"
 
     send_telegram(text)
+
     print(
-        f"Done. at_danger={len(in_danger)} new_crossings={len(new_keys)} "
-        f"subscribers_state_keys={len(current_keys)}"
+        f"Done. at_danger={len(in_danger)} "
+        f"new_crossings={len(new_keys)}"
     )
+
     return 0
 
 
