@@ -17,4 +17,4 @@ jobs:
           python-version: "3.12"
 
       - name: Run test script
-        run: python test.py
+        run: python scripts/check.py
